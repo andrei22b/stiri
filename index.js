@@ -1,8 +1,26 @@
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const fs = require('fs');
-const path = require("path");
+const path = require('path');
 
+
+const sendMail = (message) => {
+    return new Promise ((resolve, reject) => {
+        const send = require('gmail-send')({
+            user: 'andreibstest@gmail.com',
+            pass: 'dvszkzymxvievwqa',
+            to: ['oprea.daiana28@gmail.com', 'andrei22b@yahho.ro', 'andrei.ancas@bannersnack.com'],
+            subject: 'Accident nou !!!',
+        });
+    
+        send({
+            text: message,  
+        }, (error, result, fullResult) => {
+            if (error) reject(error);
+                resolve(result);
+        })     
+    });
+}
 
 const options = {
     uri: 'http://www.aradon.ro',
@@ -26,6 +44,9 @@ rp(options)
             }
         });
     })
+    .finally(() => {
+        sendAndVerifyNews()
+    })
     .catch((err) => {
         console.log(err);
     });
@@ -38,6 +59,7 @@ const list = (data) => {
     }
     return findMax;
 }
+
 const checkIfTitleExists = (title, data) => {
     let status = true;
     data.forEach(element => {
@@ -47,6 +69,7 @@ const checkIfTitleExists = (title, data) => {
     });
     return status;
 }
+
 const writeDataToJson = (title, link) => {
     const file = fs.readFileSync(path.resolve(__dirname, "./data.json"));
     const json = JSON.parse(file);
@@ -77,3 +100,32 @@ const writeDataToJson = (title, link) => {
         console.log('Title already exists ...skiping')
     }
 };
+
+const sendAndVerifyNews = () => {
+    const file = fs.readFileSync(path.resolve(__dirname, "./data.json"));
+    const json = JSON.parse(file);
+    let msg;
+    json.forEach((el) => {
+        if (el.status === false) {
+            msg = `
+                Title: ${el.title}
+                Link: ${el.url}
+            `;
+            const p = sendMail(msg);
+            p.then((res) => {
+                const resStatus = parseInt(res.slice(0, 3));
+                if (resStatus === 250) {
+                    el.status = true;
+                    fs.writeFileSync('data.json', JSON.stringify(json), (err) => {
+                        if(err)  console.log(err)
+                    });
+                }
+            })
+        }
+    })
+}
+
+// TODO: facut sa verifice la interval de 5 minute
+// TODO: trebuie integrata verificarea si pe facebook
+// TODO: trebuie sa mearga si cu alte site-uri 
+// TODO: trebuie gasit un server de unde sa ruleze
