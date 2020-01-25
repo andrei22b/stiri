@@ -9,7 +9,7 @@ const sendMail = (message) => {
         const send = require('gmail-send')({
             user: 'andreibstest@gmail.com',
             pass: 'dvszkzymxvievwqa',
-            to: ['oprea.daiana28@gmail.com', 'andrei22b@yahho.ro', 'andrei.ancas@bannersnack.com'],
+            to: ['oprea.daiana28@gmail.com', 'andrei22b@yahoo.ro'],
             subject: 'Accident nou !!!',
         });
     
@@ -22,34 +22,94 @@ const sendMail = (message) => {
     });
 }
 
-const options = {
-    uri: 'http://www.aradon.ro',
-    transform: (body) => {
-        return cheerio.load(body);
-    },
-};
 
-rp(options)
-    .then(($) => {
-        $('.enews-article-offerer-title').each((index, element) => {
-            const title = $(element).text().replace(/\s\s+/g, '');
-            const myWord = 'accident|accidente|pieton|lovit de masina|pieton lovit';
-            const reg = new RegExp(`\\b(?:${myWord})\\b`, 'gmi');
-            const result = reg.test(title);
-            if (result) {
-                const link = $(element).find('a').attr('href');
-                writeDataToJson(title, link);
-                console.log(link)
-                console.log(title);
-            }
+const getAndCheckNews = () => {
+    const sources = {
+        bihon: {
+            website: "http://www.bihon.ro",
+            title: '.enews-article-offerer-title',
+            link: {
+                el: 'a',
+                attr: 'href'
+            },
+        },
+        tion: {
+            website: "http://www.tion.ro",
+            title: '.enews-article-offerer-title',
+            link: {
+                el: 'a',
+                attr: 'href'
+            },
+        },
+        aradon: {
+            website: "http://www.aradon.ro",
+            title: '.enews-article-offerer-title',
+            link: {
+                el: 'a',
+                attr: 'href'
+            },
+        },
+        ebihoreanul: {
+            website: "https://www.ebihoreanul.ro/",
+            title: 'div.title',
+            link: {
+                el: 'a',
+                attr: 'href'
+            },
+        },
+        zcj: {
+            website: "https://zcj.ro/",
+            title: 'div.post-wrapper > div.row >div > h3',
+            link: {
+                el: 'a',
+                attr: 'href'
+            },
+        },
+        portalsm: {
+            website: "https://portalsm.ro/",
+            title: 'h2.st-loop-entry-title > a',
+            link: {
+                el: 'h2.st-loop-entry-title > a',
+                attr: 'href'
+            },
+        },
+    }
+
+    Object.keys(sources).forEach((el) => {
+        const options = {
+            uri: sources[el].website,
+            transform: (body) => {
+                return cheerio.load(body);
+            },
+        };
+
+        rp(options)
+        .then(($) => {
+            $(sources[el].title).each((index, element) => {
+                const title = $(element).text().replace(/\s\s+/g, '');
+                const myWord = 'biciclist lovit|biciclistul lovit|femeie lovita|barbat lovit|copil lovit|descracerat|descarcerat|descarcerati|impact frontal|impactul frontal|accident|accidente|pieton|lovit de masina|pieton lovit';
+                const reg = new RegExp(`\\b(?:${myWord})\\b`, 'gmi');
+                const result = reg.test(title);
+                if (result) {
+                    let link;
+                    if (el === 'portalsm') {
+                        link = $(element).attr(sources[el].link.attr);
+                    } else {
+                        link = $(element).find(sources[el].link.el).attr(sources[el].link.attr);
+                    }
+                    writeDataToJson(title, link);
+                    console.log(link)
+                    console.log(title);
+                }
+            });
+        })
+        .catch((err) => {
+            console.log(err);
         });
-    })
-    .finally(() => {
-        sendAndVerifyNews()
-    })
-    .catch((err) => {
-        console.log(err);
     });
+    sendAndVerifyNews()
+}
+
 
 
 const list = (data) => {
@@ -129,3 +189,6 @@ const sendAndVerifyNews = () => {
 // TODO: trebuie integrata verificarea si pe facebook
 // TODO: trebuie sa mearga si cu alte site-uri 
 // TODO: trebuie gasit un server de unde sa ruleze
+
+
+setInterval(getAndCheckNews, 300000);
