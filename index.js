@@ -9,7 +9,7 @@ const sendMail = (message) => {
         const send = require('gmail-send')({
             user: 'andreibstest@gmail.com',
             pass: 'dvszkzymxvievwqa',
-            to: ['oprea.daiana28@gmail.com', 'andrei22b@yahoo.ro'],
+            to: ['oprea.daiana28@gmail.com', 'andrei22b@yahoo.ro', 'crisbin2003@yahoo.com'],
             subject: 'Accident nou !!!',
         });
     
