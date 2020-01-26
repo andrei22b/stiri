@@ -190,5 +190,4 @@ const sendAndVerifyNews = () => {
 // TODO: trebuie sa mearga si cu alte site-uri 
 // TODO: trebuie gasit un server de unde sa ruleze
 
-
-setInterval(getAndCheckNews, 300000);
+module.exports = getAndCheckNews;
